@@ -14,11 +14,12 @@ svhn = 'svhn'
 synth = 'synth'
 usps = 'usps'
 
-vlcs_datasets = ["CALTECH", "LABELME", "PASCAL", "SUN"]
-pacs_datasets = ["art_painting", "cartoon", "photo", "sketch"]
-office_datasets = ["amazon", "dslr", "webcam"]
+vlcs_datasets = ["CALTECH", "LABELME", "PASCAL", "SUN"]   #Object of vlcs: flamingo, gray scale car, chair, dalmatian, person
+pacs_datasets = ["art_painting", "cartoon", "photo", "sketch"]  #Object of pacs: dog, elephant, giraffle, guitar, horse, house, person
+office_datasets = ["amazon", "dslr", "webcam"] #Class: backpack, bike, bikehelmet, bookcase, bottle, calculator, desk_chair,..
 digits_datasets = [mnist, mnist, svhn, usps]
 available_datasets = office_datasets + pacs_datasets + vlcs_datasets + digits_datasets
+
 #office_paths = {dataset: "/home/enoon/data/images/office/%s" % dataset for dataset in office_datasets}
 #pacs_paths = {dataset: "/home/enoon/data/images/PACS/kfold/%s" % dataset for dataset in pacs_datasets}
 #vlcs_paths = {dataset: "/home/enoon/data/images/VLCS/%s/test" % dataset for dataset in pacs_datasets}

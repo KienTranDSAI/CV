@@ -9,7 +9,6 @@ from data import data_helper
 from data.data_helper import available_datasets
 from models import model_factory
 from optimizer.optimizer_helper import get_optim_and_scheduler
-from utils.Logger import Logger
 import numpy as np
 
 
@@ -40,12 +39,12 @@ def get_args():
     parser.add_argument("--val_size", type=float, default="0.1", help="Validation size (between 0 and 1)")
     parser.add_argument("--folder_name", default=None, help="Used by the logger to save logs")
     parser.add_argument("--bias_whole_image", default=None, type=float, help="If set, will bias the training procedure to show more often the whole image")
-    parser.add_argument("--TTA", type=bool, action='store_true', help="Activate test time data augmentation")
-    parser.add_argument("--classify_only_sane", action='store_true', type=bool,
+    parser.add_argument("--TTA", action='store_true', help="Activate test time data augmentation")
+    parser.add_argument("--classify_only_sane", action='store_true', 
                         help="If true, the network will only try to classify the non scrambled images")
-    parser.add_argument("--train_all", action='store_true', type=bool, help="If true, all network weights will be trained")
+    parser.add_argument("--train_all", action='store_true',  help="If true, all network weights will be trained")
     parser.add_argument("--suffix", default="", help="Suffix for the logger")
-    parser.add_argument("--nesterov", action='store_true', type=bool, help="Use nesterov")
+    parser.add_argument("--nesterov", action='store_true',  help="Use nesterov")
     
     return parser.parse_args()
 
@@ -79,6 +78,9 @@ class Trainer:
     def _do_epoch(self):
         criterion = nn.CrossEntropyLoss()
         self.model.train()
+
+        epoch_loss = 0
+
         for it, ((data, jig_l, class_l), d_idx) in enumerate(self.source_loader):
             data, jig_l, class_l, d_idx = data.to(self.device), jig_l.to(self.device), class_l.to(self.device), d_idx.to(self.device)
             # absolute_iter_count = it + self.current_epoch * self.len_dataloader
@@ -109,19 +111,20 @@ class Trainer:
             _, jig_pred = jigsaw_logit.max(dim=1)
             # _, domain_pred = domain_logit.max(dim=1)
             loss = class_loss + jigsaw_loss * self.jig_weight  # + 0.1 * domain_loss
-
+            
             loss.backward()
             self.optimizer.step()
 
-            self.logger.log(it, len(self.source_loader),
-                            {"jigsaw": jigsaw_loss.item(), "class": class_loss.item()  # , "domain": domain_loss.item()
-                             },
-                            # ,"lambda": lambda_val},
-                            {"jigsaw": torch.sum(jig_pred == jig_l.data).item(),
-                             "class": torch.sum(cls_pred == class_l.data).item(),
-                             # "domain": torch.sum(domain_pred == d_idx.data).item()
-                             },
-                            data.shape[0])
+            epoch_loss += loss
+            # self.logger.log(it, len(self.source_loader),
+            #                 {"jigsaw": jigsaw_loss.item(), "class": class_loss.item()  # , "domain": domain_loss.item()
+            #                  },
+            #                 # ,"lambda": lambda_val},
+            #                 {"jigsaw": torch.sum(jig_pred == jig_l.data).item(),
+            #                  "class": torch.sum(cls_pred == class_l.data).item(),
+            #                  # "domain": torch.sum(domain_pred == d_idx.data).item()
+            #                  },
+            #                 data.shape[0])
             del loss, class_loss, jigsaw_loss, jigsaw_logit, class_logit
 
         self.model.eval()
@@ -135,9 +138,10 @@ class Trainer:
                     jigsaw_correct, class_correct = self.do_test(loader)
                 jigsaw_acc = float(jigsaw_correct) / total
                 class_acc = float(class_correct) / total
-                self.logger.log_test(phase, {"jigsaw": jigsaw_acc, "class": class_acc})
+                # self.logger.log_test(phase, {"jigsaw": jigsaw_acc, "class": class_acc})
                 self.results[phase][self.current_epoch] = class_acc
 
+        print(f"Epoch training loss {epoch_loss} and test jigsaw_acc {jigsaw_acc}, class acc is {class_acc}")
     def do_test(self, loader):
         jigsaw_correct = 0
         class_correct = 0
@@ -173,18 +177,20 @@ class Trainer:
         return jigsaw_correct, class_correct, single_correct
 
     def do_training(self):
-        self.logger = Logger(self.args, update_frequency=30)  # , "domain", "lambda"
+        # self.logger = Logger(self.args, update_frequency=30)  # , "domain", "lambda"
         self.results = {"val": torch.zeros(self.args.epochs), "test": torch.zeros(self.args.epochs)}
         for self.current_epoch in range(self.args.epochs):
-            self.scheduler.step()
-            self.logger.new_epoch(self.scheduler.get_lr())
+            print(self.current_epoch)
+            
+            # self.logger.new_epoch(self.scheduler.get_lr())
             self._do_epoch()
+            self.scheduler.step()
         val_res = self.results["val"]
         test_res = self.results["test"]
         idx_best = val_res.argmax()
         #print("Best val %g, corresponding test %g - best test: %g" % (val_res.max(), test_res[idx_best], test_res.max()))
-        self.logger.save_best(test_res[idx_best], test_res.max())
-        return self.logger, self.model
+        # self.logger.save_best(test_res[idx_best], test_res.max())
+        # return self.logger, self.model
 
 
 def main():
