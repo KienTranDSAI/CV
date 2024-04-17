@@ -115,7 +115,7 @@ class Trainer:
             loss.backward()
             self.optimizer.step()
 
-            epoch_loss += loss
+            epoch_loss += loss.detach()
             # self.logger.log(it, len(self.source_loader),
             #                 {"jigsaw": jigsaw_loss.item(), "class": class_loss.item()  # , "domain": domain_loss.item()
             #                  },
@@ -125,7 +125,7 @@ class Trainer:
             #                  # "domain": torch.sum(domain_pred == d_idx.data).item()
             #                  },
             #                 data.shape[0])
-            del loss, class_loss, jigsaw_loss, jigsaw_logit, class_logit
+            del loss, class_loss, jigsaw_loss, jigsaw_logit, class_logit, epoch_loss
 
         self.model.eval()
         with torch.no_grad():
