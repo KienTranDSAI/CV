@@ -72,8 +72,8 @@ def get_train_dataloader(args, patches):
                               patches=patches, jig_classes=args.jigsaw_n_classes))
     dataset = ConcatDataset(datasets)
     val_dataset = ConcatDataset(val_datasets)
-    loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4, pin_memory=True, drop_last=True)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=4, pin_memory=True, drop_last=False)
+    loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
     return loader, val_loader
 
 
@@ -85,7 +85,7 @@ def get_val_dataloader(args, patches=False):
         val_dataset = Subset(val_dataset, args.limit_target)
         print("Using %d subset of val dataset" % args.limit_target)
     dataset = ConcatDataset([val_dataset])
-    loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=4, pin_memory=True, drop_last=False)
+    loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
     return loader
 
 
@@ -101,7 +101,7 @@ def get_jigsaw_val_dataloader(args, patches=False):
         val_dataset = Subset(val_dataset, args.limit_target)
         print("Using %d subset of val dataset" % args.limit_target)
     dataset = ConcatDataset([val_dataset])
-    loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=4, pin_memory=True, drop_last=False)
+    loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
     return loader
 
 
@@ -131,5 +131,5 @@ def get_target_jigsaw_loader(args):
     name_train, _, labels_train, _ = get_split_dataset_info(join(dirname(__file__), 'txt_lists', '%s_train.txt' % args.target), 0)
     dataset = JigsawDataset(name_train, labels_train, patches=False, img_transformer=img_transformer,
                             tile_transformer=tile_transformer, jig_classes=args.jigsaw_n_classes, bias_whole_image=args.bias_whole_image)
-    loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4, pin_memory=True, drop_last=True)
+    loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
     return loader
